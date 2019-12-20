@@ -1,3 +1,5 @@
+### Warning, this is a custom fork of websocket-sharp which adds .NET Standard support. Use at your own risk! ###
+
 ![Logo](websocket-sharp_logo.png)
 
 ## Welcome to websocket-sharp! ##
@@ -11,7 +13,7 @@ websocket-sharp supports:
 - [HTTP Authentication](#http-authentication)
 - [Query string, Origin header, and Cookies](#query-string-origin-header-and-cookies)
 - [Connecting through the HTTP proxy server](#connecting-through-the-http-proxy-server)
-- .NET Framework **3.5** or later (includes compatible environment such as [Mono])
+- .NET Framework or .NET Core that supports .NET Standard 2.0
 
 ## Branches ##
 
