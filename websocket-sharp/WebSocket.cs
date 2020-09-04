@@ -119,6 +119,7 @@ namespace WebSocketSharp
     private Uri                            _uri;
     private const string                   _version = "13";
     private TimeSpan                       _waitTime;
+    private static int                     _fragmentLength;
 
     #endregion
 
@@ -128,20 +129,6 @@ namespace WebSocketSharp
     /// Represents the empty array of <see cref="byte"/> used internally.
     /// </summary>
     internal static readonly byte[] EmptyBytes;
-
-    /// <summary>
-    /// Represents the length used to determine whether the data should be fragmented in sending.
-    /// </summary>
-    /// <remarks>
-    ///   <para>
-    ///   The data will be fragmented if that length is greater than the value of this field.
-    ///   </para>
-    ///   <para>
-    ///   If you would like to change the value, you must set it to a value between <c>125</c> and
-    ///   <c>Int32.MaxValue - 14</c> inclusive.
-    ///   </para>
-    /// </remarks>
-    internal static readonly int FragmentLength;
 
     /// <summary>
     /// Represents the random number generator used internally.
@@ -155,8 +142,8 @@ namespace WebSocketSharp
     static WebSocket ()
     {
       _maxRetryCountForConnect = 10;
+      _fragmentLength = 1016;
       EmptyBytes = new byte[0];
-      FragmentLength = 1016;
       RandomNumber = new RNGCryptoServiceProvider ();
     }
 
@@ -771,6 +758,31 @@ namespace WebSocketSharp
 
           _waitTime = value;
         }
+      }
+    }
+
+    /// <summary>
+    /// Represents the length used to determine whether the data should be fragmented in sending.
+    /// </summary>
+    /// <remarks>
+    ///   <para>
+    ///   The data will be fragmented if that length is greater than the value of this field.
+    ///   </para>
+    ///   <para>
+    ///   If you would like to change the value, you must set it to a value between <c>125</c> and
+    ///   <c>Int32.MaxValue - 14</c> inclusive.
+    ///   </para>
+    /// </remarks>
+    public static int FragmentLength
+    {
+      get
+      {
+        return _fragmentLength;
+      }
+
+      set
+      {
+        _fragmentLength = value;
       }
     }
 
@@ -1891,8 +1903,8 @@ namespace WebSocketSharp
       if (len == 0)
         return send (Fin.Final, opcode, EmptyBytes, false);
 
-      var quo = len / FragmentLength;
-      var rem = (int) (len % FragmentLength);
+      var quo = len / _fragmentLength;
+      var rem = (int) (len % _fragmentLength);
 
       byte[] buff = null;
       if (quo == 0) {
@@ -1902,16 +1914,16 @@ namespace WebSocketSharp
       }
 
       if (quo == 1 && rem == 0) {
-        buff = new byte[FragmentLength];
-        return stream.Read (buff, 0, FragmentLength) == FragmentLength
+        buff = new byte[_fragmentLength];
+        return stream.Read (buff, 0, _fragmentLength) == _fragmentLength
                && send (Fin.Final, opcode, buff, compressed);
       }
 
       /* Send fragments */
 
       // Begin
-      buff = new byte[FragmentLength];
-      var sent = stream.Read (buff, 0, FragmentLength) == FragmentLength
+      buff = new byte[_fragmentLength];
+      var sent = stream.Read (buff, 0, _fragmentLength) == _fragmentLength
                  && send (Fin.More, opcode, buff, compressed);
 
       if (!sent)
@@ -1919,7 +1931,7 @@ namespace WebSocketSharp
 
       var n = rem == 0 ? quo - 2 : quo - 1;
       for (long i = 0; i < n; i++) {
-        sent = stream.Read (buff, 0, FragmentLength) == FragmentLength
+        sent = stream.Read (buff, 0, _fragmentLength) == _fragmentLength
                && send (Fin.More, Opcode.Cont, buff, false);
 
         if (!sent)
@@ -1928,7 +1940,7 @@ namespace WebSocketSharp
 
       // End
       if (rem == 0)
-        rem = FragmentLength;
+        rem = _fragmentLength;
       else
         buff = new byte[rem];
 

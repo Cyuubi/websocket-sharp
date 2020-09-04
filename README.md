@@ -1,4 +1,4 @@
-### Warning, this is a custom fork of websocket-sharp which adds .NET Standard support. Use at your own risk! ###
+### Warning, this is a custom fork of websocket-sharp which adds .NET Standard support and fixes things. Use at your own risk! ###
 
 ![Logo](websocket-sharp_logo.png)
 
